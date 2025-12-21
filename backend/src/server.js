@@ -1,47 +1,21 @@
-require('dotenv').config();
-const express=require('express');
-const bodyParser=require('body-parser');
-const cors=require('cors');
-const routes=require('./routes');
+const express = require("express");
+const path = require("path");
 
-const app=express();
-const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-
-// CORS configuration
-const corsOptions = {
-  origin: NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || 'http://localhost'
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
-app.use(bodyParser.json());
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', environment: NODE_ENV });
-});
+const app = express();
+app.use(express.json());
 
 // API routes
-app.use('/api', routes);
+app.use("/api", require("./routes")); // adjust if needed
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// Serve frontend
+const frontendPath = path.join(__dirname, "../public");
+app.use(express.static(frontendPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${NODE_ENV}`);
-  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
+  console.log(`Server running on port ${PORT}`);
 });
